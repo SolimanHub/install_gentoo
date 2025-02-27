@@ -5,7 +5,6 @@ echo -e "\033[32mEjecutando chroot\033[0m"
 source /etc/profile
 
 emerge htop neovim
-emerge sys-firmware/amd-ucode
 #export PS1="(chroot) ${PS1}"
 
 systemctl preset-all # Preparar servicios base systemd
@@ -56,12 +55,13 @@ useradd -m -G users,wheel,audio,video $usuario
 echo -e "\033[32m===== Crear contraseña para $usuario =====\033[0m"
 passwd "$usuario"
 
-#useradd -m -G users,wheel,audio,video <usuario>
-#passwd <usuario>
-# Editar sudoers:
+echo -e "\033[32m===== Editar sudoers =====\033[0m"
 sed -ie 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/g' /etc/sudoers
 
 echo -e "\033[32m===== Asegurando datos en el disco =====\033[0m"
 sync
 
+rm -f /chroot
+
+echo -e "\033[32m===== Proceso termina con exito =====\033[0m"
 exit

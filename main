@@ -54,4 +54,4 @@ mount --rbind /dev /mnt/gentoo/dev && mount --make-rslave /mnt/gentoo/dev
 mv ./chroot /mnt/gentoo/
 
 echo -e "\033[32mEjecutar ./chroot\033[0m"
-chroot /mnt/gentoo /bin/bash
+chroot /mnt/gentoo /bin/bash ./chroot
