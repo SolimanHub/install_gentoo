@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo -e "\033[32mEjecutando chroot\033[0m"
 source /etc/profile
-export PS1="(chroot) ${PS1}"
+
+emerge htop neovim
+#export PS1="(chroot) ${PS1}"
 
 systemctl preset-all # Preparar servicios base systemd
 
@@ -25,7 +28,7 @@ grub-mkconfig -o /boot/grub/grub.cfg
 emerge net-misc/dhcpcd
 systemctl enable dhcpcd
 
-emerge sudo htop neovim
+emerge sudo
 
 echo -e "\033[32m===== Configurar contraseña de root =====\033[0m"
 passwd

@@ -30,7 +30,7 @@ tar xpvf stage3-*.tar.xz --xattrs-include='*.*' --numeric-owner -C /mnt/gentoo
 
 echo -e "\033[32mCreando directorio para portage\033[0m"
 echo ''
-mkdir -p var/db/repos/gentoo && cd var/db/repos/gentoo
+mkdir -p /mnt/gentoo/var/db/repos/gentoo
 
 echo -e "\033[32mDescargando portage\033[0m"
 echo ''
@@ -45,9 +45,12 @@ echo 'MAKEOPTS="-j$(nproc + 1)"' >> /mnt/gentoo/etc/portage/make.conf
 echo -e "\033[32mFSTAB\033[0m"
 genfstab -U /mnt/gentoo >> /mnt/gentoo/etc/fstab
 
+echo -e "\033[32mMontando elementos\033[0m"
 cp --dereference /etc/resolv.conf /mnt/gentoo/etc/
 mount -t proc proc /mnt/gentoo/proc
 mount --rbind /sys /mnt/gentoo/sys && mount --make-rslave /mnt/gentoo/sys
 mount --rbind /dev /mnt/gentoo/dev && mount --make-rslave /mnt/gentoo/dev
 mv ./chroot /mnt/gentoo/
+
+echo -e "\033[32mEjecutar ./chroot\033[0m"
 chroot /mnt/gentoo /bin/bash
