@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo -e "\nDiscos disponibles para trabajar:"
+echo "Selecciona uno (ej: sda):"
+echo
+lsblk -d -o NAME,SIZE,TYPE | grep disk
+echo
+read -p "Disco (ej. sda): " unidad
+DISCO="/dev/$unidad"
+
+if [ ! -b "$DISCO" ]; then
+    echo "Error: La unidad '$DISCO' no existe."
+    exit 1
+fi
+
+# Obtener tamaño total del disco en MB
+tamanio_bytes=$(blockdev --getsize64 "$DISCO")
+tamanio_mb=$((tamanio_bytes / 1024 / 1024))
+
+# Definir tamaños fijos y calcular espacio flexible
+swap_size_mb=2048
+overhead=$((swap_size_mb)) 
+flexible=$((tamanio_mb - overhead))
+flexible_gb=$(( flexible / 1024 ))
+
+echo -e "\nTamaño total del disco: ${tamanio_mb} MB"
+echo "Espacio disponible para distribuir: ${flexible_gb} GB"
+
+# Solicitar porcentaje para home
+read -rp "Ingrese el porcentaje para /home (1-99, default 50%): " home_percent
+home_percent=${home_percent:-50}
+
+# Validar entrada
+if [[ ! "$home_percent" =~ ^[0-9]+$ ]] || (( home_percent < 1 || home_percent > 99 )); then
+    echo "Valor inválido. Usando 50% por defecto."
+    home_percent=50
+fi
+
+# Calcular tamaños
+home_mb=$(( flexible * home_percent / 100 ))
+root_mb=$(( flexible - home_mb ))
+root_gb=$(( root_mb / 1024 ))
+home_gb=$(( home_mb / 1024 ))
+
+echo -e "\nResumen de particiones:"
+echo "• Swap: 2 GB (2048 MB)"
+echo "• /home: ${home_gb} GB (${home_percent}%)"
+echo "• / (root): ${root_gb} GB"
+
+echo -e "\n=== Particionado con gdisk ==="
+gdisk "$DISCO" <<EOF > gdisk.log 2>&1
+o
+Y
+n
+
+
++550M
+EF00
+n
+2
+
++${swap_size_mb}M
+8200
+n
+3
+
++${home_mb}M
+
+n
+
+
+
+
+w
+Y
+EOF
+
+echo -e "\n=== Formateando particiones ==="
+mkfs.ext4 "${DISCO}4"      # Raíz
+sync
+mkfs.ext4 "${DISCO}3"      # Home
+sync
+mkfs.fat -F32 "${DISCO}1"   # EFI
+sync
+mkswap "${DISCO}2"         # Swap
+
+echo -e "\n=== Montando particiones ==="
+mount "${DISCO}4" /mnt
+mkdir -p /mnt/home
+mount "${DISCO}3" /mnt/home
+mkdir -p /mnt/boot/EFI
+mount "${DISCO}1" /mnt/boot/EFI
+
+echo -e "\nActivando swap..."
+swapon "${DISCO}2"
+
+echo -e "\nProceso finalizado."
