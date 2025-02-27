@@ -5,6 +5,7 @@ echo -e "\033[32mEjecutando chroot\033[0m"
 source /etc/profile
 
 emerge htop neovim
+emerge sys-firmware/amd-ucode
 #export PS1="(chroot) ${PS1}"
 
 systemctl preset-all # Preparar servicios base systemd
@@ -26,12 +27,12 @@ echo -e "\033[32mInstalando grub\033[0m"
 echo ''
 emerge sys-boot/grub efibootmgr
 
-if ! efibootmgr | grep -q "Gentoo-Systemd"; then
-    echo -e "\033[31mError: Verificar instalación EFI\033[0m"
-    exit 1
-fi
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --removable --bootloader-id=Gentoo
+grub-mkconfig -o /boot/grub/grub.cfg
 
-grub-install --target=x86_64-efi --efi-directory=/boot/efi --removable
+emerge sys-kernel/gentoo-kernel-bin
+
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=Gentoo --recheck
 grub-mkconfig -o /boot/grub/grub.cfg
 
 emerge net-misc/dhcpcd
@@ -39,26 +40,26 @@ systemctl enable dhcpcd
 
 emerge sudo
 
+echo -e "\033[32m===== Configurar zona horaria =====\033[0m"
+ln -sf /usr/share/zoneinfo/America/Tegucigalpa /etc/localtime
+
+echo -e "\033[32m===== Configurar hostname =====\033[0m"
+echo "gentoo-pc" > /etc/hostname
+
 echo -e "\033[32m===== Configurar contraseña de root =====\033[0m"
 passwd
 
 echo -e "\033[32m===== Crear usuario =====\033[0m"
 read -rp "Nombre de Usuario: " usuario
 
-useradd -m -g users -G audio,lp,optical,storage,video,wheel,games,power,scanner -s /bin/bash "$usuario"
+useradd -m -G users,wheel,audio,video $usuario
 echo -e "\033[32m===== Crear contraseña para $usuario =====\033[0m"
 passwd "$usuario"
 
 #useradd -m -G users,wheel,audio,video <usuario>
 #passwd <usuario>
 # Editar sudoers:
-echo "%wheel ALL=(ALL) ALL" >> /etc/sudoers
-
-echo -e "\033[32m===== Configurar zona horaria =====\033[0m"
-ln -sf /usr/share/zoneinfo/America/Tegucigalpa /etc/localtime
-
-echo -e "\033[32m===== Configurar hostname =====\033[0m"
-echo "gentoo-pc" > /etc/hostname
+sed -ie 's/# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/g' /etc/sudoers
 
 echo -e "\033[32m===== Asegurando datos en el disco =====\033[0m"
 sync

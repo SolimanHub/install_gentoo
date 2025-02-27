@@ -2,9 +2,9 @@
 set -euo pipefail
 
 echo -e "\033[32mDescargando scripts necesarios\033[0m"
-wget https://raw.githubusercontent.com/SolimanHub/install_gentoo/refs/heads/main/discos_gdisk
 wget https://raw.githubusercontent.com/SolimanHub/install_gentoo/refs/heads/main/main
 wget https://raw.githubusercontent.com/SolimanHub/install_gentoo/refs/heads/main/chroot
+chmod +x chroot main
 
 echo -e "\033[32mDiscos disponibles para trabajar:\033[0m"
 echo -e "\033[32mSelecciona uno (ej: sda):\033[0m"
