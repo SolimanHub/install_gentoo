@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo -e "\nDiscos disponibles para trabajar:"
-echo "Selecciona uno (ej: sda):"
+echo -e "\033[32mDiscos disponibles para trabajar:\033[0m"
+echo -e "\033[32mSelecciona uno (ej: sda):\033[0m"
 echo
 lsblk -d -o NAME,SIZE,TYPE | grep disk
 echo
@@ -10,7 +10,7 @@ read -p "Disco (ej. sda): " unidad
 DISCO="/dev/$unidad"
 
 if [ ! -b "$DISCO" ]; then
-    echo "Error: La unidad '$DISCO' no existe."
+    echo -e "\033[31mError: La unidad '$DISCO' no existe.\033[0m"
     exit 1
 fi
 
@@ -24,8 +24,9 @@ overhead=$((swap_size_mb))
 flexible=$((tamanio_mb - overhead))
 flexible_gb=$(( flexible / 1024 ))
 
-echo -e "\nTamaño total del disco: ${tamanio_mb} MB"
-echo "Espacio disponible para distribuir: ${flexible_gb} GB"
+echo ""
+echo -e "\033[32mTamaño total del disco: ${tamanio_mb} MB\033[0m"
+echo -e "\033[32mEspacio disponible para distribuir: ${flexible_gb} GB\033[0m"
 
 # Solicitar porcentaje para home
 read -rp "Ingrese el porcentaje para /home (1-99, default 50%): " home_percent
@@ -33,7 +34,7 @@ home_percent=${home_percent:-50}
 
 # Validar entrada
 if [[ ! "$home_percent" =~ ^[0-9]+$ ]] || (( home_percent < 1 || home_percent > 99 )); then
-    echo "Valor inválido. Usando 50% por defecto."
+    echo -e "\033[31mValor inválido. Usando 50% por defecto.\033[0m"
     home_percent=50
 fi
 
@@ -43,12 +44,12 @@ root_mb=$(( flexible - home_mb ))
 root_gb=$(( root_mb / 1024 ))
 home_gb=$(( home_mb / 1024 ))
 
-echo -e "\nResumen de particiones:"
-echo "• Swap: 2 GB (2048 MB)"
-echo "• /home: ${home_gb} GB (${home_percent}%)"
-echo "• / (root): ${root_gb} GB"
+echo -e "\033[32m\nResumen de particiones:\033[0m"
+echo -e "\033[32m• Swap: 2 GB (2048 MB)\033[0m"
+echo -e "\033[32m• /home: ${home_gb} GB (${home_percent}%)\033[0m"
+echo -e "\033[32m• / (root): ${root_gb} GB\033[0m"
 
-echo -e "\n=== Particionado con gdisk ==="
+echo -e "\033[32m=== Particionado con gdisk ===\033[0m"
 gdisk "$DISCO" <<EOF > gdisk.log 2>&1
 o
 Y
@@ -76,7 +77,7 @@ w
 Y
 EOF
 
-echo -e "\n=== Formateando particiones ==="
+echo -e "\033[32m=== Formateando particiones ===\033[0m"
 mkfs.ext4 "${DISCO}4"      # Raíz
 sync
 mkfs.ext4 "${DISCO}3"      # Home
@@ -85,16 +86,16 @@ mkfs.fat -F32 "${DISCO}1"   # EFI
 sync
 mkswap "${DISCO}2"         # Swap
 
-echo -e "\n=== Montando particiones ==="
+echo -e "\033[32m=== Montando particiones ===\033[0m"
 mount "${DISCO}4" /mnt
 mkdir -p /mnt/home
 mount "${DISCO}3" /mnt/home
 mkdir -p /mnt/boot/EFI
 mount "${DISCO}1" /mnt/boot/EFI
 
-echo -e "\nActivando swap..."
+echo -e "\033[32mActivando swap...\033[0m"
 swapon "${DISCO}2"
 
-echo -e "\nProceso finalizado."
+echo -e "\033[32mProceso finalizado.\033[0m"
 
 ./main
