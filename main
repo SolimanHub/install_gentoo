@@ -1,3 +1,59 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
+echo -e "\033[32mDescargar stage3\033[0m"
+echo ''
+wget https://gentoo.osuosl.org/releases/amd64/autobuilds/current-stage3-amd64-desktop-systemd/stage3-amd64-desktop-systemd-20250223T170333Z.tar.xz
 
+wget https://gentoo.osuosl.org/releases/amd64/autobuilds/current-stage3-amd64-desktop-systemd/stage3-amd64-desktop-systemd-20250223T170333Z.tar.xz.DIGESTS 
+
+# Verificar que existan los archivos necesarios
+if [[ ! -f stage3-*.DIGESTS.xz ]]; then
+    echo -e "\033[31mNo se encontró el archivo stage3-*.DIGESTS.xz\033[0m"
+    exit 1
+fi
+
+if [[ ! -f stage3*.tar.xz ]]; then
+    echo -e "\033[31mNo se encontró el archivo stage3*.tar.xz\033[0m"
+    exit 1
+fi
+
+# Extraer el hash SHA512 del archivo .DIGESTS.xz
+hash_from_digest=$(cat stage3-*.DIGESTS.xz | grep -A1 SHA512 | grep -E '.tar.xz$' | awk '{print $1}')
+
+# Calcular el hash SHA512 del archivo .tar.xz
+hash_calculated=$(sha512sum stage3*.tar.xz | awk '{print $1}')
+
+# Comparar los hashes
+if [[ "$hash_from_digest" != "$hash_calculated" ]]; then
+    echo "El hash no encaja"
+    exit 1
+fi
+
+echo -e "\033[32mExtraer stage3\033[0m"
+echo ''
+
+tar xpvf stage3-*.tar.xz --xattrs-include='*.*' --numeric-owner -C /mnt/gentoo
+
+echo -e "\033[32mCreando directorio para portage\033[0m"
+echo ''
+mkdir -p var/db/repos/gentoo && cd var/db/repos/gentoo
+
+echo -e "\033[32mDescargando portage\033[0m"
+echo ''
+wget https://gentoo.osuosl.org/snapshots/portage-20250219.tar.xz
+
+echo -e "\033[32mExtraer portage\033[0m"
+echo ''
+tar xpvf portage-*.tar.xz -C /mnt/gentoo/var/db/repos/gentoo --strip-components=1
+
+echo 'MAKEOPTS="-j$(nproc + 1)"' >> /mnt/gentoo/etc/portage/make.conf
+
+echo -e "\033[32mFSTAB\033[0m"
+genfstab -U /mnt/gentoo >> /mnt/gentoo/etc/fstab
+
+cp --dereference /etc/resolv.conf /mnt/gentoo/etc/
+mount -t proc proc /mnt/gentoo/proc
+mount --rbind /sys /mnt/gentoo/sys && mount --make-rslave /mnt/gentoo/sys
+mount --rbind /dev /mnt/gentoo/dev && mount --make-rslave /mnt/gentoo/dev
+chroot /mnt/gentoo /bin/bash
