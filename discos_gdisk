@@ -90,12 +90,12 @@ echo -e "\033[32m=== Montando particiones ===\033[0m"
 mount "${DISCO}4" /mnt/gentoo
 mkdir -p /mnt/gentoo/home
 mount "${DISCO}3" /mnt/gentoo/home
-mkdir -p /mnt/gentoo/boot/EFI
-mount "${DISCO}1" /mnt/gentoo/boot/EFI
+mkdir -p /mnt/gentoo/boot/efi
+mount "${DISCO}1" /mnt/gentoo/boot/efi
 
 echo -e "\033[32mActivando swap...\033[0m"
 swapon "${DISCO}2"
 
-echo -e "\033[32mProceso finalizado.\033[0m"
+echo -e "\033[32mdisk_gdisk finalizado.\033[0m"
 
 ./main
