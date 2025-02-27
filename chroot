@@ -9,6 +9,15 @@ emerge htop neovim
 
 systemctl preset-all # Preparar servicios base systemd
 
+echo -e "\033[32mInstalando dependencias para el Kernel\033[0m"
+echo ''
+touch /etc/portage/package.use/kernel
+echo "sys-kernel/gentoo-kernel-bin-6.6.74 initramfs" >> /etc/portage/package.use/kernel
+echo ">=sys-kernel/installkernel-50 dracut" >> /etc/portage/package.use/kernel
+echo "virtual/dist-kernel-6.6.74 dracut" >> /etc/portage/package.use/kernel
+
+emerge dracut
+
 echo -e "\033[32mInstalando Kernel\033[0m"
 echo ''
 emerge sys-kernel/gentoo-kernel-bin
