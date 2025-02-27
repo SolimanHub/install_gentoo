@@ -7,8 +7,8 @@ wget https://gentoo.osuosl.org/releases/amd64/autobuilds/current-stage3-amd64-de
 
 wget https://gentoo.osuosl.org/releases/amd64/autobuilds/current-stage3-amd64-desktop-systemd/stage3-amd64-desktop-systemd-20250223T170333Z.tar.xz.DIGESTS 
 
-# Verificar que existan los archivos necesarios
-if [[ ! -f stage3-*.DIGESTS.xz ]]; then
+echo -e "\033[32mVerificar que existan los archivos necesarios\033[0m"
+if [[ ! -f stage3-*.xz*D* ]]; then
     echo -e "\033[31mNo se encontró el archivo stage3-*.DIGESTS.xz\033[0m"
     exit 1
 fi
@@ -18,13 +18,17 @@ if [[ ! -f stage3*.tar.xz ]]; then
     exit 1
 fi
 
-# Extraer el hash SHA512 del archivo .DIGESTS.xz
+echo -e "\033[32mExtraer el hash SHA512 del archivo .DIGESTS\033[0m"
+# 
 hash_from_digest=$(cat stage3-*.DIGESTS.xz | grep -A1 SHA512 | grep -E '.tar.xz$' | awk '{print $1}')
 
-# Calcular el hash SHA512 del archivo .tar.xz
+# 
+echo -e "\033[32mCalcular el hash SHA512 del archivo .tar.xz\033[0m"
+# 
 hash_calculated=$(sha512sum stage3*.tar.xz | awk '{print $1}')
 
-# Comparar los hashes
+# 
+echo -e "\033[32mComparar los hashes\033[0m"
 if [[ "$hash_from_digest" != "$hash_calculated" ]]; then
     echo "El hash no encaja"
     exit 1
